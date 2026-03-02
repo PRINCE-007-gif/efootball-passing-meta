@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>eFootball Passing — Complete Analysis</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:#12151f;
+  color:#c8d4f0;
+  font-family:'Share Tech Mono',monospace;
+  padding:40px 24px 80px;
+  display:flex;justify-content:center;
+}
+.doc{width:960px;max-width:100%}
+
+/* ── PAGE DIVIDERS ── */
+.page-break{
+  display:flex;align-items:center;gap:16px;
+  margin:52px 0 36px;
+}
+.page-break-line{flex:1;height:1px;background:#252e42}
+.page-break-label{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:11px;font-weight:700;letter-spacing:5px;
+  color:#3a4a6a;text-transform:uppercase;white-space:nowrap;
+}
+
+/* ── SECTION HEADERS ── */
+.sec-title{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:clamp(16px,2.5vw,22px);
+  font-weight:800;letter-spacing:3px;
+  text-transform:uppercase;color:#e8eeff;
+  margin-bottom:5px;
+}
+.sec-sub{
+  font-size:11px;color:#4a5a7a;
+  letter-spacing:.5px;margin-bottom:22px;line-height:1.65;
+}
+
+/* ── CHART BOX ── */
+.chart-box{
+  background:#161c28;
+  border:1px solid #252e42;
+  padding:28px 28px 16px 52px;
+  margin-bottom:2px;
+  position:relative;
+}
+svg{display:block;width:100%;overflow:visible}
+
+/* ── BOTTOM CARDS ── */
+.cards{
+  display:grid;grid-template-columns:repeat(5,1fr);
+  border:1px solid #252e42;border-top:none;
+  margin-bottom:36px;
+}
+.card{
+  padding:18px 14px;
+  border-right:1px solid #252e42;text-align:center;
+}
+.card:last-child{border-right:none}
+.card-num{
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:800;font-size:clamp(28px,4vw,42px);
+  line-height:1;margin-bottom:3px;
+}
+.card-sub{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:#3a4a6a;margin-bottom:8px}
+.card-desc{font-size:10px;color:#4a5a7a;line-height:1.6}
+
+/* ── RADAR / MULTI-METRIC GRID ── */
+.metric-grid{
+  display:grid;grid-template-columns:repeat(5,1fr);
+  gap:2px;border:1px solid #252e42;
+  margin-bottom:36px;
+}
+.metric-col{
+  background:#161c28;
+  padding:16px 12px;
+  border-right:1px solid #252e42;
+}
+.metric-col:last-child{border-right:none}
+.mc-tier{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:13px;font-weight:800;letter-spacing:2px;
+  margin-bottom:12px;padding-bottom:8px;
+  border-bottom:1px solid #252e42;
+}
+.mc-row{margin-bottom:9px}
+.mc-name{font-size:9px;letter-spacing:1.5px;color:#3a5a7a;text-transform:uppercase;margin-bottom:4px}
+.mc-bar-bg{height:4px;background:#1e2a3e;border-radius:2px;margin-bottom:2px}
+.mc-bar-fill{height:100%;border-radius:2px;transition:width .5s}
+.mc-val{font-size:11px;font-weight:700}
+
+/* ── SCENARIO TABLE ── */
+.scenario-table{
+  width:100%;border-collapse:collapse;
+  font-size:11px;margin-bottom:36px;
+}
+.scenario-table th{
+  padding:10px 12px;text-align:left;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:11px;font-weight:700;letter-spacing:3px;
+  text-transform:uppercase;color:#3a4a6a;
+  border-bottom:2px solid #252e42;
+  background:#161c28;
+}
+.scenario-table td{
+  padding:10px 12px;border-bottom:1px solid #1e2634;
+  vertical-align:top;line-height:1.6;
+  background:#161c28;
+}
+.scenario-table tr:last-child td{border-bottom:none}
+.scenario-table td:first-child{
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:700;font-size:13px;letter-spacing:1px;
+}
+
+/* ── VERDICT ROW ── */
+.verdict-row{
+  display:grid;grid-template-columns:repeat(5,1fr);
+  gap:2px;margin-bottom:36px;
+}
+.verdict-card{
+  background:#161c28;border:1px solid #252e42;
+  padding:16px 14px;
+}
+.vc-tier{
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:800;font-size:20px;letter-spacing:1px;
+  margin-bottom:3px;
+}
+.vc-range{font-size:10px;letter-spacing:2px;color:rgba(255,255,255,.3);margin-bottom:10px}
+.vc-item{
+  display:flex;gap:8px;font-size:10px;
+  line-height:1.55;color:#6a7a9a;margin-bottom:5px;
+}
+.vc-icon{flex-shrink:0;font-size:11px}
+
+/* ── UPGRADE VALUE CHART ── */
+.upgrade-row{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:2px;border:1px solid #252e42;
+  margin-bottom:36px;
+}
+.upgrade-card{
+  background:#161c28;padding:20px 18px;
+  border-right:1px solid #252e42;
+}
+.upgrade-card:last-child{border-right:none}
+.uc-title{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:14px;font-weight:800;letter-spacing:2px;
+  margin-bottom:14px;padding-bottom:10px;
+  border-bottom:1px solid #252e42;
+}
+.uc-row{
+  display:flex;justify-content:space-between;
+  align-items:center;margin-bottom:8px;
+  font-size:11px;
+}
+.uc-label{color:#4a5a7a;letter-spacing:.5px}
+.uc-val{font-weight:700;font-size:13px}
+
+/* ── POSITION GUIDE ── */
+.pos-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:2px;border:1px solid #252e42;
+  margin-bottom:36px;
+}
+.pos-card{
+  background:#161c28;padding:16px 14px;
+  border-right:1px solid #252e42;
+}
+.pos-card:last-child{border-right:none}
+.pos-name{
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:800;font-size:16px;letter-spacing:2px;
+  color:#e8eeff;margin-bottom:8px;
+}
+.pos-min{font-size:10px;letter-spacing:1px;color:#4a5a7a;margin-bottom:4px}
+.pos-rec{font-size:10px;letter-spacing:1px;margin-bottom:10px}
+.pos-note{font-size:10px;color:#3a4a6a;line-height:1.55}
+
+/* ── FOOTER ── */
+.footer{
+  font-size:10px;color:#2a3a52;letter-spacing:1px;
+  border-top:1px solid #1e2634;padding-top:16px;
+  line-height:1.8;text-align:center;
+}
+</style>
+</head>
+<body>
+<div class="doc">
+
+<!-- ════════════════════════════════════════════
+     PAGE 1 — COMPOSITE PERFORMANCE OVERVIEW
+═════════════════════════════════════════════ -->
+<div class="sec-title">Effective Passing Performance vs Stat Value</div>
+<div class="sec-sub">
+  Composite score = average of 5 metrics: Pass Completion % · Through Ball Accuracy · Under-Pressure Retention · Long Ball / Switch % · 1-Touch Pass Quality<br>
+  Higher = better in actual eFootball gameplay · Each dot = one stat point from 75 to 99
+</div>
+
+<div class="chart-box">
+  <svg id="svg1" viewBox="0 0 880 360"></svg>
+</div>
+<div class="cards" id="cards1"></div>
+
+
+<!-- ════════════════════════════════════════════
+     PAGE 2 — ALL 5 METRICS INDIVIDUALLY
+═════════════════════════════════════════════ -->
+<div class="page-break">
+  <div class="page-break-line"></div>
+  <div class="page-break-label">Page 2 · Individual Metric Breakdown</div>
+  <div class="page-break-line"></div>
+</div>
+
+<div class="sec-title">Every Metric Charted Separately</div>
+<div class="sec-sub">
+  Five individual charts — one per metric. This reveals exactly which skills benefit most from higher passing stats, and which ones plateau. The gaps tell a different story for each metric.
+</div>
+
+<!-- 5 small charts in a row -->
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:2px;margin-bottom:2px">
+  <div class="chart-box" style="padding:16px 16px 8px 36px">
+    <div style="font-size:9px;letter-spacing:3px;color:#4a5a7a;margin-bottom:10px;text-transform:uppercase">Pass Completion %</div>
+    <svg id="svgM0" viewBox="0 0 160 160"></svg>
+  </div>
+  <div class="chart-box" style="padding:16px 16px 8px 36px">
+    <div style="font-size:9px;letter-spacing:3px;color:#4a5a7a;margin-bottom:10px;text-transform:uppercase">Through Ball</div>
+    <svg id="svgM1" viewBox="0 0 160 160"></svg>
+  </div>
+  <div class="chart-box" style="padding:16px 16px 8px 36px">
+    <div style="font-size:9px;letter-spacing:3px;color:#4a5a7a;margin-bottom:10px;text-transform:uppercase">Under Pressure</div>
+    <svg id="svgM2" viewBox="0 0 160 160"></svg>
+  </div>
+  <div class="chart-box" style="padding:16px 16px 8px 36px">
+    <div style="font-size:9px;letter-spacing:3px;color:#4a5a7a;margin-bottom:10px;text-transform:uppercase">Long Ball / Switch</div>
+    <svg id="svgM3" viewBox="0 0 160 160"></svg>
+  </div>
+  <div class="chart-box" style="padding:16px 16px 8px 36px">
+    <div style="font-size:9px;letter-spacing:3px;color:#4a5a7a;margin-bottom:10px;text-transform:uppercase">1-Touch Quality</div>
+    <svg id="svgM4" viewBox="0 0 160 160"></svg>
+  </div>
+</div>
+
+<div style="border:1px solid #252e42;border-top:none;margin-bottom:36px">
+  <div style="display:grid;grid-template-columns:repeat(5,1fr)">
+    <div style="padding:12px 14px;border-right:1px solid #252e42;font-size:10px;color:#4a5a7a;line-height:1.6">
+      <span style="color:#f87171;font-weight:700">Most linear</span> of all metrics. Goes from 55% at 75 to 99% at 99. Every point matters slightly. No giant single wall.
+    </div>
+    <div style="padding:12px 14px;border-right:1px solid #252e42;font-size:10px;color:#4a5a7a;line-height:1.6">
+      <span style="color:#fb923c;font-weight:700">Steepest wall at 90.</span> Goes from near-useless below 85 to game-changing above 90. This metric alone justifies reaching 90.
+    </div>
+    <div style="padding:12px 14px;border-right:1px solid #252e42;font-size:10px;color:#4ade80;line-height:1.6">
+      <span style="color:#4ade80;font-weight:700">Two big walls</span> — at 80 and at 90. Below 80 you gift the ball. 80–89 is playable. 90+ you're reliable under any press.
+    </div>
+    <div style="padding:12px 14px;border-right:1px solid #252e42;font-size:10px;color:#4a5a7a;line-height:1.6">
+      <span style="color:#38bdf8;font-weight:700">Biggest wall at 85.</span> Long balls below 85 are dangerous. Between 85–94 you get workable switches. 95+ is pinpoint.
+    </div>
+    <div style="padding:12px 14px;font-size:10px;color:#4a5a7a;line-height:1.6">
+      <span style="color:#c084fc;font-weight:700">Massive wall at 90.</span> 1-touch below 90 breaks down combination play entirely. Above 90 it flows naturally. 95+ feels automatic.
+    </div>
+  </div>
+</div>
+
+<!-- Per-tier full metric columns -->
+<div class="sec-title" style="font-size:16px;margin-bottom:12px">Tier-by-Tier Metric Deep Dive</div>
+<div class="metric-grid" id="metricGrid"></div>
+
+
+<!-- ════════════════════════════════════════════
+     PAGE 3 — SCENARIOS + POSITION GUIDE
+═════════════════════════════════════════════ -->
+<div class="page-break">
+  <div class="page-break-line"></div>
+  <div class="page-break-label">Page 3 · Real Gameplay Scenarios</div>
+  <div class="page-break-line"></div>
+</div>
+
+<div class="sec-title">What Actually Happens In Gameplay — By Scenario</div>
+<div class="sec-sub">Every situation you encounter in a real match, mapped to each tier. This is the practical translation of the numbers above.</div>
+
+<table class="scenario-table" id="scenarioTable">
+  <thead>
+    <tr>
+      <th>Scenario</th>
+      <th style="color:#f87171">75–79 BRONZE</th>
+      <th style="color:#fb923c">80–84 SILVER</th>
+      <th style="color:#4ade80">85–89 GOLD</th>
+      <th style="color:#38bdf8">90–94 PLAT</th>
+      <th style="color:#c084fc">95–99 ELITE</th>
+    </tr>
+  </thead>
+  <tbody id="scenarioBody"></tbody>
+</table>
+
+<!-- POSITION GUIDE -->
+<div class="sec-title" style="font-size:16px;margin-bottom:6px">Minimum Passing Stat by Position</div>
+<div class="sec-sub">The floor you need to not actively hurt your team. Recommended = comfortable. Dream = meta-defining.</div>
+<div class="pos-grid" id="posGrid"></div>
+
+
+<!-- ════════════════════════════════════════════
+     PAGE 4 — UPGRADE VALUE + VERDICT
+═════════════════════════════════════════════ -->
+<div class="page-break">
+  <div class="page-break-line"></div>
+  <div class="page-break-label">Page 4 · Upgrade Value & Final Verdict</div>
+  <div class="page-break-line"></div>
+</div>
+
+<div class="sec-title">Is The Upgrade Worth It?</div>
+<div class="sec-sub">Return on investment at each wall — measured across all 5 metrics. Bigger jump = better upgrade value per GP spent.</div>
+
+<!-- Upgrade value chart -->
+<div class="chart-box" style="margin-bottom:2px">
+  <svg id="svgUpgrade" viewBox="0 0 880 200"></svg>
+</div>
+<div class="upgrade-row" id="upgradeRow"></div>
+
+<!-- Final verdict -->
+<div class="sec-title" style="font-size:16px;margin-bottom:14px;margin-top:0">Final Verdict</div>
+<div class="verdict-row" id="verdictRow"></div>
+
+<!-- Second composite chart: gap only (like the reference image) -->
+<div class="sec-title" style="font-size:16px;margin-bottom:6px">The Walls At A Glance</div>
+<div class="sec-sub">Composite jump at each tier threshold. The 85-wall and 90-wall are the two biggest leaps in eFootball passing.</div>
+<div class="chart-box" style="margin-bottom:36px">
+  <svg id="svgWalls" viewBox="0 0 880 160"></svg>
+</div>
+
+<div class="footer">
+  Data based on community gameplay testing · eFootball 2024/2025 · Passing stats include: Low Pass, Lofted Pass, Under Pressure retention, Switch of play, 1-Touch accuracy<br>
+  OC Research · Not affiliated with Konami · r/eFootball
+</div>
+
+</div><!-- /doc -->
+
+<script>
+// ══════════════════════════════════════════════════════
+// CORE DATA
+// ══════════════════════════════════════════════════════
+const TIER_META = [
+  { name:'BRONZE', short:'75–79', color:'#f87171', bg:'rgba(248,113,113,0.07)' },
+  { name:'SILVER', short:'80–84', color:'#fb923c', bg:'rgba(251,146,60,0.07)' },
+  { name:'GOLD',   short:'85–89', color:'#4ade80', bg:'rgba(74,222,128,0.07)' },
+  { name:'PLAT',   short:'90–94', color:'#38bdf8', bg:'rgba(56,189,248,0.07)' },
+  { name:'ELITE',  short:'95–99', color:'#c084fc', bg:'rgba(192,132,252,0.07)' },
+];
+
+// [stat, passComp, throughBall, underPressure, longBall, oneTouch]
+const RAW = [
+  [75, 55, 22, 30, 28, 36],
+  [76, 56, 23, 31, 29, 37],
+  [77, 57, 24, 32, 31, 38],
+  [78, 58, 25, 33, 32, 39],
+  [79, 59, 26, 34, 33, 40],
+  [80, 67, 38, 48, 46, 54],
+  [81, 68, 39, 49, 47, 55],
+  [82, 69, 40, 50, 48, 56],
+  [83, 70, 41, 51, 49, 57],
+  [84, 71, 43, 53, 51, 59],
+  [85, 78, 56, 64, 62, 68],
+  [86, 79, 57, 65, 63, 69],
+  [87, 80, 58, 66, 65, 70],
+  [88, 81, 59, 67, 66, 72],
+  [89, 82, 61, 69, 67, 73],
+  [90, 91, 76, 82, 81, 86],
+  [91, 92, 77, 83, 82, 87],
+  [92, 93, 78, 84, 83, 88],
+  [93, 93, 79, 85, 84, 88],
+  [94, 94, 80, 86, 85, 89],
+  [95, 97, 89, 93, 92, 95],
+  [96, 97, 90, 93, 93, 95],
+  [97, 98, 91, 94, 94, 96],
+  [98, 99, 93, 95, 95, 97],
+  [99, 99, 94, 96, 96, 97],
+];
+
+function comp(row) { return Math.round((row[1]+row[2]+row[3]+row[4]+row[5])/5); }
+
+const TIERS_DATA = [
+  { ti:0, rows: RAW.slice(0,5)  },
+  { ti:1, rows: RAW.slice(5,10) },
+  { ti:2, rows: RAW.slice(10,15)},
+  { ti:3, rows: RAW.slice(15,20)},
+  { ti:4, rows: RAW.slice(20,25)},
+];
+
+const METRIC_NAMES = ['Pass Comp','Through Ball','Under Press','Long Ball','1-Touch'];
+const METRIC_IDX   = [1,2,3,4,5];
+
+// ══════════════════════════════════════════════════════
+// SVG HELPERS
+// ══════════════════════════════════════════════════════
+function svgEl(tag, attrs, parent) {
+  const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));
+  if(parent) parent.appendChild(e);
+  return e;
+}
+function svgText(str, attrs, parent) {
+  const e = svgEl('text', attrs, parent);
+  e.textContent = str; return e;
+}
+
+// ══════════════════════════════════════════════════════
+// PAGE 1 — COMPOSITE CHART
+// ══════════════════════════════════════════════════════
+(function(){
+  const svg = document.getElementById('svg1');
+  const W=880,H=360,L=10,R=16,T=24,B=52;
+  const cW=W-L-R, cH=H-T-B;
+
+  function sx(s){ return L+((s-75)/(99-75))*cW; }
+  function sy(v){ return T+cH-(v/100)*cH; }
+
+  // Grid
+  [0,20,40,60,80,100].forEach(v=>{
+    svgEl('line',{x1:L,y1:sy(v),x2:W-R,y2:sy(v),
+      stroke:v===0?'#3a4a6a':'#1e2a3e','stroke-width':v===0?1.5:1,'stroke-dasharray':v===0?'':'3,6'},svg);
+    svgText(v,{x:L-6,y:sy(v)+4,'text-anchor':'end','font-size':'11',fill:'#3a4a6a','font-family':'Share Tech Mono'},svg);
+  });
+
+  // Shading
+  TIERS_DATA.forEach(td=>{
+    const t=TIER_META[td.ti];
+    const x0=sx(td.rows[0][0]-0.4), x1=sx(td.rows[td.rows.length-1][0]+0.4);
+    svgEl('rect',{x:x0,y:T,width:x1-x0,height:cH,fill:t.bg},svg);
+  });
+
+  // Lines + dots + annotations
+  TIERS_DATA.forEach(td=>{
+    const t=TIER_META[td.ti];
+    const pts=td.rows.map(r=>`${sx(r[0])},${sy(comp(r))}`).join(' ');
+    svgEl('polyline',{points:pts,fill:'none',stroke:t.color,'stroke-width':'2.8',
+      'stroke-linecap':'round','stroke-linejoin':'round'},svg);
+    td.rows.forEach(r=>{
+      svgEl('circle',{cx:sx(r[0]),cy:sy(comp(r)),r:5,fill:t.color,stroke:'#161c28','stroke-width':2},svg);
+    });
+    // Tier name x-axis
+    const midS=td.rows[2][0];
+    svgText(t.name,{x:sx(midS),y:H-B+30,'text-anchor':'middle','font-size':'11',
+      fill:t.color,'font-family':'Barlow Condensed, sans-serif','font-weight':'700','letter-spacing':'2'},svg);
+    // stat numbers
+    td.rows.forEach(r=>{
+      svgText(r[0],{x:sx(r[0]),y:H-B+14,'text-anchor':'middle',
+        'font-size':'10',fill:'#3a4a6a','font-family':'Share Tech Mono'},svg);
+    });
+    // +N across tier
+    const fc=comp(td.rows[0]), lc=comp(td.rows[4]);
+    const mx=(sx(td.rows[0][0])+sx(td.rows[4][0]))/2;
+    const my=(sy(fc)+sy(lc))/2-15;
+    svgText(`+${lc-fc} across tier`,{x:mx,y:my,'text-anchor':'middle',
+      'font-size':'10',fill:t.color,'font-family':'Share Tech Mono'},svg);
+  });
+
+  // WALL lines + arrows
+  const walls=[{at:80,f:0,t:1},{at:85,f:1,t:2},{at:90,f:2,t:3},{at:95,f:3,t:4}];
+  walls.forEach(w=>{
+    const wx=sx(w.at-0.42);
+    svgEl('line',{x1:wx,y1:T,x2:wx,y2:T+cH,stroke:'#ef4444','stroke-width':1.5,'stroke-dasharray':'5,4'},svg);
+    svgText('WALL',{x:wx+4,y:T+13,'font-size':'10',fill:'#ef4444','font-family':'Share Tech Mono'},svg);
+    const fc=comp(TIERS_DATA[w.f].rows[4]);
+    const tc=comp(TIERS_DATA[w.t].rows[0]);
+    const jump=tc-fc;
+    const ax=wx+1, ay1=sy(fc), ay2=sy(tc);
+    svgEl('line',{x1:ax,y1:ay1,x2:ax,y2:ay2+10,stroke:'#f87171','stroke-width':1.8},svg);
+    svgEl('polygon',{points:`${ax},${ay2} ${ax-5},${ay2+10} ${ax+5},${ay2+10}`,fill:'#f87171'},svg);
+    svgText(`+${jump}pts`,{x:ax+9,y:(ay1+ay2)/2+4,'font-size':'12',fill:'#f87171',
+      'font-family':'Share Tech Mono','font-weight':'bold'},svg);
+  });
+
+  // Baseline
+  svgEl('line',{x1:L,y1:sy(0),x2:W-R,y2:sy(0),stroke:'#3a4a6a','stroke-width':1.5},svg);
+})();
+
+// Bottom cards page 1
+(function(){
+  const jumps=[
+    {num:'BASE',   sub:'No prior wall',  color:'#f87171',
+     desc:'Composite sits at 34. Nearly unplayable as a creator. All 5 metrics are in the bottom third. The ball goes to the wrong place more often than not.'},
+    {num:'+18',    sub:'Jump at 80 wall',color:'#fb923c',
+     desc:'Short game becomes functional in open space. Through balls still unreliable. Under pressure the ball is still lost regularly.'},
+    {num:'+22',    sub:'Jump at 85 wall',color:'#4ade80',
+     desc:'Biggest composite jump of all 4 walls. Long balls and switches suddenly land. This tier is where passing begins feeling intentional.'},
+    {num:'+16',    sub:'Jump at 90 wall',color:'#38bdf8',
+     desc:'Everything tightens up. 1-touch combinations begin working. Press is manageable. The sweet spot tier for playmakers.'},
+    {num:'+13',    sub:'Jump at 95 wall',color:'#c084fc',
+     desc:'Smaller composite jump, but the quality of elite-tier execution is unmatched. Every single metric is above 89. Defences cannot prepare.'},
+  ];
+  const container=document.getElementById('cards1');
+  jumps.forEach(d=>{
+    const c=document.createElement('div');
+    c.className='card';
+    c.style.borderTop=`3px solid ${d.color}`;
+    c.innerHTML=`<div class="card-num" style="color:${d.color}">${d.num}</div>
+    <div class="card-sub">${d.sub}</div><div class="card-desc">${d.desc}</div>`;
+    container.appendChild(c);
+  });
+})();
+
+// ══════════════════════════════════════════════════════
+// PAGE 2 — 5 SMALL METRIC CHARTS
+// ══════════════════════════════════════════════════════
+[0,1,2,3,4].forEach(mi=>{
+  const svg=document.getElementById('svgM'+mi);
+  const W=160,H=160,L=4,R=4,T=8,B=12;
+  const cW=W-L-R,cH=H-T-B;
+  const mIdx=METRIC_IDX[mi];
+  function sx(s){return L+((s-75)/(99-75))*cW;}
+  function sy(v){return T+cH-(v/100)*cH;}
+
+  // Faint grid
+  [0,50,100].forEach(v=>{
+    svgEl('line',{x1:L,y1:sy(v),x2:W-R,y2:sy(v),
+      stroke:'#1e2a3e','stroke-width':1},svg);
+    svgText(v,{x:L-3,y:sy(v)+3,'text-anchor':'end','font-size':'8',fill:'#2a3a52','font-family':'Share Tech Mono'},svg);
+  });
+
+  TIERS_DATA.forEach(td=>{
+    const t=TIER_META[td.ti];
+    const pts=td.rows.map(r=>`${sx(r[0])},${sy(r[mIdx])}`).join(' ');
+    svgEl('polyline',{points:pts,fill:'none',stroke:t.color,'stroke-width':'2',
+      'stroke-linecap':'round','stroke-linejoin':'round'},svg);
+    td.rows.forEach(r=>{
+      svgEl('circle',{cx:sx(r[0]),cy:sy(r[mIdx]),r:3,fill:t.color,stroke:'#161c28','stroke-width':1.5},svg);
+    });
+  });
+
+  // Wall marks
+  [80,85,90,95].forEach(w=>{
+    const wx=sx(w-0.4);
+    svgEl('line',{x1:wx,y1:T,x2:wx,y2:T+cH,stroke:'#ef444466','stroke-width':1,'stroke-dasharray':'3,3'},svg);
+  });
+});
+
+// ── Per-tier metric columns
+(function(){
+  const grid=document.getElementById('metricGrid');
+  TIERS_DATA.forEach(td=>{
+    const t=TIER_META[td.ti];
+    const avgRow=[0,0,0,0,0];
+    td.rows.forEach(r=>METRIC_IDX.forEach((mi,i)=>{ avgRow[i]+=r[mi]; }));
+    avgRow.forEach((_,i)=>{ avgRow[i]=Math.round(avgRow[i]/td.rows.length); });
+
+    const col=document.createElement('div');
+    col.className='metric-col';
+    let inner=`<div class="mc-tier" style="color:${t.color}">${t.name}<br><span style="font-size:10px;opacity:.5;letter-spacing:1px">${t.short}</span></div>`;
+    METRIC_NAMES.forEach((mn,i)=>{
+      const v=avgRow[i];
+      inner+=`<div class="mc-row">
+        <div class="mc-name">${mn}</div>
+        <div class="mc-bar-bg"><div class="mc-bar-fill" style="width:${v}%;background:${t.color}"></div></div>
+        <div class="mc-val" style="color:${t.color}">${v}%</div>
+      </div>`;
+    });
+    // Weakest metric callout
+    const minIdx=avgRow.indexOf(Math.min(...avgRow));
+    const maxIdx=avgRow.indexOf(Math.max(...avgRow));
+    inner+=`<div style="margin-top:10px;padding-top:8px;border-top:1px solid #1e2a3e;font-size:9px;color:#3a4a6a;line-height:1.6">
+      <span style="color:${t.color}">↑ Best:</span> ${METRIC_NAMES[maxIdx]} (${avgRow[maxIdx]}%)<br>
+      <span style="color:#ef4444">↓ Worst:</span> ${METRIC_NAMES[minIdx]} (${avgRow[minIdx]}%)
+    </div>`;
+    col.innerHTML=inner;
+    grid.appendChild(col);
+  });
+})();
+
+// ══════════════════════════════════════════════════════
+// PAGE 3 — SCENARIOS
+// ══════════════════════════════════════════════════════
+const SCENARIOS = [
+  {
+    situation: 'Simple short pass (open space)',
+    vals: ['55–59% land cleanly', '67–71% land cleanly', '78–82% land cleanly', '91–94% land cleanly', '97–99% land cleanly'],
+  },
+  {
+    situation: 'Pass under direct pressure',
+    vals: ['30–34% — gift ball constantly', '48–53% — still very risky', '64–69% — manageable', '82–86% — reliable', '93–96% — almost immune'],
+  },
+  {
+    situation: 'Switch of play / diagonal long ball',
+    vals: ['28–33% — forget it', '46–51% — coin flip', '62–67% — workable', '81–85% — lands on feet', '92–96% — pinpoint every time'],
+  },
+  {
+    situation: 'Through ball splitting defence',
+    vals: ['22–26% — almost never works', '38–43% — rare success', '56–61% — situational', '76–80% — consistent threat', '89–94% — splits defence at will'],
+  },
+  {
+    situation: '1-touch combination play',
+    vals: ['36–40% — breaks down constantly', '54–59% — works only in open play', '68–73% — decent flow', '86–89% — smooth combinations', '95–97% — tiki-taka level'],
+  },
+  {
+    situation: 'Pass after a dribble / body feint',
+    vals: ['40–44% — turnover likely', '55–60% — still shaky', '70–74% — generally fine', '85–89% — very clean', '94–97% — seamless transition'],
+  },
+  {
+    situation: 'Cross-field switch from deep',
+    vals: ['25–30% — intercepted or out', '42–47% — dangerous attempt', '59–64% — risky but doable', '78–83% — reliable weapon', '91–95% — changes game instantly'],
+  },
+  {
+    situation: 'Pass in congested midfield',
+    vals: ['28–32% — ball lost every phase', '44–50% — struggles badly', '62–68% — holds most times', '80–84% — navigates well', '92–95% — finds gaps nobody sees'],
+  },
+];
+
+(function(){
+  const tbody=document.getElementById('scenarioBody');
+  SCENARIOS.forEach(sc=>{
+    const tr=document.createElement('tr');
+    const td0=document.createElement('td');
+    td0.textContent=sc.situation;
+    td0.style.color='#8a9ab8';
+    tr.appendChild(td0);
+    sc.vals.forEach((v,i)=>{
+      const td=document.createElement('td');
+      td.textContent=v;
+      td.style.color=TIER_META[i].color+'bb';
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+})();
+
+// ── Position guide
+const POSITIONS = [
+  {
+    pos:'GK / CB', icon:'🧤',
+    floor:'75', rec:'80–84', dream:'85–89',
+    note:'Does not need high passing for a sweeper CB. Anything above 85 on a CB is a bonus. GK just needs 75+ to distribute safely.',
+  },
+  {
+    pos:'DM / CDM', icon:'🛡️',
+    floor:'85', rec:'88–92', dream:'92–96',
+    note:'The DM is the heart of build-up. Below 85 kills your entire midfield tempo. 90+ lets them recycle possession under the highest press.',
+  },
+  {
+    pos:'CM / #8', icon:'⚙️',
+    floor:'82', rec:'87–91', dream:'91–95',
+    note:'Box-to-box CMs need 85+ for switches to land. Under 82 they become a weak link in any high-press situation.',
+  },
+  {
+    pos:'CAM / #10', icon:'🎯',
+    floor:'88', rec:'91–94', dream:'95–99',
+    note:'The most passing-dependent role in the game. Below 88 the through balls don\'t arrive, the 1-touch fails, and combinations collapse.',
+  },
+  {
+    pos:'Winger / LW/RW', icon:'⚡',
+    floor:'78', rec:'83–88', dream:'90–94',
+    note:'Wingers need decent passing for cutbacks and diagonal switches. Pure pace wingers can get away with 80. Inverted wingers need 88+.',
+  },
+  {
+    pos:'CF / ST', icon:'⚽',
+    floor:'75', rec:'80–85', dream:'88–92',
+    note:'Strikers rarely need elite passing unless playing as a link-up target man. 85 is plenty. Anything above 90 on a pure striker is wasted GP.',
+  },
+  {
+    pos:'Full Back / WB', icon:'🔁',
+    floor:'80', rec:'84–88', dream:'90–94',
+    note:'Modern fullbacks overlap constantly. Below 80 means crosses and switches fail. 88+ turns your fullback into a genuine attacking outlet.',
+  },
+  {
+    pos:'Box-to-Box CM', icon:'💪',
+    floor:'83', rec:'87–91', dream:'92–96',
+    note:'Needs to combine both defensive and attacking pass qualities. The 90-wall is particularly impactful here — reaching 90 transforms this role.',
+  },
+];
+
+(function(){
+  const grid=document.getElementById('posGrid');
+  POSITIONS.forEach(p=>{
+    const card=document.createElement('div');
+    card.className='pos-card';
+    card.innerHTML=`
+      <div class="pos-name">${p.pos}</div>
+      <div class="pos-min">Floor: <span style="color:#f87171">${p.floor}</span></div>
+      <div class="pos-rec" style="color:#4ade80">Recommended: ${p.rec}</div>
+      <div style="color:#c084fc;font-size:10px;letter-spacing:1px;margin-bottom:10px">Dream: ${p.dream}</div>
+      <div class="pos-note">${p.note}</div>
+    `;
+    grid.appendChild(card);
+  });
+})();
+
+// ══════════════════════════════════════════════════════
+// PAGE 4 — UPGRADE VALUE HORIZONTAL BAR CHART
+// ══════════════════════════════════════════════════════
+(function(){
+  const svg=document.getElementById('svgUpgrade');
+  const W=880,H=200,L=120,R=20,T=20,B=20;
+  const cW=W-L-R,cH=H-T-B;
+
+  const wallJumps=[
+    {label:'74→80 wall',jump:18,color:'#fb923c',note:'Silver tier begins'},
+    {label:'79→85 wall',jump:22,color:'#4ade80',note:'Gold tier begins — biggest jump'},
+    {label:'84→90 wall',jump:16,color:'#38bdf8',note:'Platinum tier begins'},
+    {label:'94→95 wall',jump:13,color:'#c084fc',note:'Elite tier begins'},
+  ];
+  const maxJ=Math.max(...wallJumps.map(w=>w.jump));
+
+  svgText('Composite Point Jump At Each Wall',{
+    x:W/2,y:12,'text-anchor':'middle','font-size':'11',fill:'#3a4a6a','font-family':'Share Tech Mono'},svg);
+
+  wallJumps.forEach((w,i)=>{
+    const y=T+10+i*(cH/4);
+    const barW=(w.jump/maxJ)*cW;
+
+    // Label
+    svgText(w.label,{x:L-8,y:y+13,'text-anchor':'end','font-size':'11',fill:'#5a6a8a','font-family':'Share Tech Mono'},svg);
+
+    // Bar bg
+    svgEl('rect',{x:L,y:y,width:cW,height:28,fill:'#1e2a3e','rx':2},svg);
+
+    // Bar fill (animated via CSS would need JS, just render full)
+    svgEl('rect',{x:L,y:y,width:barW,height:28,fill:w.color,rx:2,opacity:'0.9'},svg);
+
+    // Value
+    svgText(`+${w.jump}pts`,{x:L+barW+8,y:y+19,'font-size':'13',fill:w.color,
+      'font-family':'Share Tech Mono','font-weight':'bold'},svg);
+
+    // Note
+    svgText(w.note,{x:L+barW+72,y:y+19,'font-size':'10',fill:'#3a4a6a','font-family':'Share Tech Mono'},svg);
+  });
+})();
+
+// Upgrade cards
+(function(){
+  const upgradeData=[
+    {
+      title:'Best Single Upgrade',color:'#4ade80',
+      rows:[
+        {l:'Wall jumped',v:'79 → 85 (Gold)'},
+        {l:'Composite gain',v:'+22 pts'},
+        {l:'Biggest metric gain',v:'Long Ball +24'},
+        {l:'2nd biggest gain',v:'Through Ball +18'},
+        {l:'Under Press gain',v:'+15 pts'},
+        {l:'ROI verdict',v:'Highest in the game'},
+      ],
+      note:'If you can only afford one upgrade, go from Silver to Gold. The 85-wall delivers the most total value across all metrics.',
+    },
+    {
+      title:'Best Value For Playmakers',color:'#38bdf8',
+      rows:[
+        {l:'Wall jumped',v:'84 → 90 (Platinum)'},
+        {l:'Composite gain',v:'+16 pts'},
+        {l:'1-Touch gain',v:'+17 pts'},
+        {l:'Through Ball gain',v:'+15 pts'},
+        {l:'Press survival gain',v:'+13 pts'},
+        {l:'ROI verdict',v:'Essential for #10/DM'},
+      ],
+      note:'For any #10, DM, or creative midfielder — reaching 90 is non-negotiable. The 1-touch and through ball gains transform these roles.',
+    },
+    {
+      title:'Is Elite Worth It?',color:'#c084fc',
+      rows:[
+        {l:'Wall jumped',v:'94 → 95 (Elite)'},
+        {l:'Composite gain',v:'+13 pts'},
+        {l:'Pass Completion gain',v:'+3 pts'},
+        {l:'Through Ball gain',v:'+9 pts'},
+        {l:'Under Press gain',v:'+7 pts'},
+        {l:'ROI verdict',v:'Meta-defining only'},
+      ],
+      note:'Smaller composite jump, but the execution gap at 95+ is elite. Through balls and under-press stats push into the 90s. Worth it for your main #10.',
+    },
+  ];
+  const row=document.getElementById('upgradeRow');
+  upgradeData.forEach(d=>{
+    const c=document.createElement('div');
+    c.className='upgrade-card';
+    let inner=`<div class="uc-title" style="color:${d.color}">${d.title}</div>`;
+    d.rows.forEach(r=>{
+      inner+=`<div class="uc-row">
+        <div class="uc-label">${r.l}</div>
+        <div class="uc-val" style="color:${d.color}">${r.v}</div>
+      </div>`;
+    });
+    inner+=`<div style="margin-top:12px;padding-top:10px;border-top:1px solid #252e42;font-size:10px;color:#3a4a6a;line-height:1.6">${d.note}</div>`;
+    c.innerHTML=inner;
+    row.appendChild(c);
+  });
+})();
+
+// ── Final Verdict
+(function(){
+  const verdicts=[
+    {tier:'BRONZE',range:'75–79',color:'#f87171',
+     items:[
+       {icon:'❌',text:'Avoid for any role that builds play'},
+       {icon:'❌',text:'Long balls and through balls simply don\'t work'},
+       {icon:'❌',text:'Turnover every 3rd touch under pressure'},
+       {icon:'✅',text:'Acceptable: backup CB, pure pace winger'},
+       {icon:'💡',text:'Priority: upgrade out of this tier first'},
+     ]},
+    {tier:'SILVER',range:'80–84',color:'#fb923c',
+     items:[
+       {icon:'⚠️',text:'Functional in open play only'},
+       {icon:'❌',text:'Still risky vs aggressive press'},
+       {icon:'⚠️',text:'Switches of play unreliable'},
+       {icon:'✅',text:'OK for: fullback, physical striker, winger'},
+       {icon:'💡',text:'Try to reach 85 ASAP for playmakers'},
+     ]},
+    {tier:'GOLD',range:'85–89',color:'#4ade80',
+     items:[
+       {icon:'✅',text:'Solid across short and medium passes'},
+       {icon:'✅',text:'Long balls now land consistently'},
+       {icon:'⚠️',text:'Through balls still situational'},
+       {icon:'✅',text:'Good for: CM, winger, box-to-box'},
+       {icon:'💡',text:'Minimum for any creative midfielder'},
+     ]},
+    {tier:'PLAT',range:'90–94',color:'#38bdf8',
+     items:[
+       {icon:'✅',text:'Everything feels sharp and intentional'},
+       {icon:'✅',text:'1-touch combinations flow naturally'},
+       {icon:'✅',text:'Through balls split defences often'},
+       {icon:'✅',text:'Best for: #10, DM, AM, CB with ball'},
+       {icon:'⭐',text:'Sweet spot — highest ROI for most roles'},
+     ]},
+    {tier:'ELITE',range:'95–99',color:'#c084fc',
+     items:[
+       {icon:'🔥',text:'Every pass is a laser'},
+       {icon:'🔥',text:'Press? Doesn\'t matter. Finds gaps anyway'},
+       {icon:'🔥',text:'Through balls automatic. Switches perfect'},
+       {icon:'✅',text:'For: meta #10, DM, or deep playmaker'},
+       {icon:'💡',text:'Not needed on every player. Invest wisely'},
+     ]},
+  ];
+  const row=document.getElementById('verdictRow');
+  verdicts.forEach(v=>{
+    const c=document.createElement('div');
+    c.className='verdict-card';
+    let inner=`<div class="vc-tier" style="color:${v.color}">${v.tier}</div>
+    <div class="vc-range">${v.range}</div>`;
+    v.items.forEach(item=>{
+      inner+=`<div class="vc-item"><span class="vc-icon">${item.icon}</span><span>${item.text}</span></div>`;
+    });
+    c.innerHTML=inner;
+    row.appendChild(c);
+  });
+})();
+
+// ── Walls at a glance (bottom simple chart)
+(function(){
+  const svg=document.getElementById('svgWalls');
+  const W=880,H=160,L=10,R=20,T=16,B=40;
+  const cW=W-L-R,cH=H-T-B;
+
+  function sx(s){return L+((s-75)/(99-75))*cW;}
+  function sy(v){return T+cH-(v/100)*cH;}
+
+  [0,50,100].forEach(v=>{
+    svgEl('line',{x1:L,y1:sy(v),x2:W-R,y2:sy(v),
+      stroke:'#1e2a3e','stroke-width':1,'stroke-dasharray':'3,6'},svg);
+    svgText(v,{x:L-6,y:sy(v)+4,'text-anchor':'end',
+      'font-size':'10',fill:'#3a4a6a','font-family':'Share Tech Mono'},svg);
+  });
+
+  TIERS_DATA.forEach(td=>{
+    const t=TIER_META[td.ti];
+    const x0=sx(td.rows[0][0]-0.4),x1=sx(td.rows[4][0]+0.4);
+    const avgC=Math.round(td.rows.reduce((s,r)=>s+comp(r),0)/td.rows.length);
+    svgEl('rect',{x:x0,y:sy(avgC),width:x1-x0,height:T+cH-sy(avgC),fill:t.bg},svg);
+    svgEl('rect',{x:x0,y:sy(avgC),width:x1-x0,height:3,fill:t.color},svg);
+    svgText(avgC,{x:(x0+x1)/2,y:sy(avgC)-6,'text-anchor':'middle',
+      'font-size':'12',fill:t.color,'font-family':'Share Tech Mono','font-weight':'bold'},svg);
+    svgText(t.name,{x:(x0+x1)/2,y:H-B+14,'text-anchor':'middle',
+      'font-size':'11',fill:t.color,'font-family':'Share Tech Mono'},svg);
+  });
+
+  // Wall lines
+  [80,85,90,95].forEach(w=>{
+    const wx=sx(w-0.42);
+    svgEl('line',{x1:wx,y1:T,x2:wx,y2:T+cH,stroke:'#ef444488','stroke-width':1.5,'stroke-dasharray':'4,4'},svg);
+    svgText('WALL',{x:wx+3,y:T+10,'font-size':'9',fill:'#ef4444','font-family':'Share Tech Mono'},svg);
+  });
+  svgEl('line',{x1:L,y1:sy(0),x2:W-R,y2:sy(0),stroke:'#3a4a6a','stroke-width':1.5},svg);
+})();
+</script>
+</body>
+</html>
